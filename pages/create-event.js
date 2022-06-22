@@ -1,20 +1,83 @@
 import { useState, useEffect } from "react";
 import Head from "next/head";
 import Link from "next/link";
+import getRandomImage from "../utils/getRandomImage";
+import { ethers } from "ethers";
+import connectContract from "../utils/connectContract";
 
 export default function CreateEvent() {
-  const [eventName, setEventName] = useState("");
+  const [memoryName, setMemoryName] = useState("");
   const [eventDate, setEventDate] = useState("");
   const [eventTime, setEventTime] = useState("");
   const [maxCapacity, setMaxCapacity] = useState("");
-  const [refund, setRefund] = useState("");
+  const [friends, setFriends] = useState([])
   const [eventLink, setEventLink] = useState("");
+  const [sPublic, setPublic] = useState(false);
   const [eventDescription, setEventDescription] = useState("");
+  const [Id, setId] = useState(null);
 
 
-  async function handleSubmit(e) {
-    e.preventDefault();
-    console.log("Form submitted")
+
+ async function handleSubmit(e) {
+  e.preventDefault();
+
+  const body = {
+    name: memoryName,
+    description: eventDescription,
+    link: eventLink,
+    image: getRandomImage()
+  }
+
+  try {
+    const response = await fetch("/api/store-memory-data", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (response.status !== 200) {
+      alert("Oops! Something went wrong. Please refresh and try again.");
+    } else {
+      console.log("Form successfully submitted!");
+      let responseJSON = await response.json();
+      await createEvent(responseJSON.cid);
+    }
+    // check response, if success is false, dont take them to success page
+  } catch (error) {
+    alert(
+      `Oops! Something went wrong. Please refresh and try again. Error ${error}`
+    );
+  }
+}
+
+const createEvent = async (cid) => {
+  try {
+    const memoryContract = connectContract();
+
+    if (memoryContract) {
+      let eventDateAndTime = new Date(`${eventDate} ${eventTime}`);
+      let eventTimestamp = eventDateAndTime.getTime();
+      let eventDataCID = cid;
+
+      const txn = await memoryContract.createNewMemory(
+        eventDataCID,
+        eventTimestamp,
+        sPublic,
+        friends,
+        { gasLimit: 900000 }
+      );
+      console.log("Minting...", txn.hash);
+      console.log("Minted -- ", txn.hash);
+    } else {
+      console.log("Error getting contract.");
+    }
+  } catch (error) {
+      console.log(error)
+  }
+};
+
+  function addToFriendsArray(newAddress){
+    //right now this only works for one friend... need to figure out how to capture after every 'enter'
+    setFriends([...friends, newAddress])
   }
 
   
@@ -31,7 +94,7 @@ export default function CreateEvent() {
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
       <Head>
-        <title>Create your event | web3rsvp</title>
+        <title>Create your memories | web3rsvp</title>
         <meta
           name="description"
           content="Create your virtual event on the blockchain"
@@ -40,7 +103,7 @@ export default function CreateEvent() {
       <section className="relative py-12">
     
           <h1 className="text-3xl tracking-tight font-extrabold text-gray-900 sm:text-4xl md:text-5xl mb-4">
-            Create your virtual event
+            Save your memories ~forever~
           </h1>
         
      
@@ -51,22 +114,43 @@ export default function CreateEvent() {
             <div className="space-y-6 sm:space-y-5">
               <div className="sm:grid sm:grid-cols-3 sm:gap-4 sm:items-start sm:pt-5">
                 <label
-                  htmlFor="eventname"
+                  htmlFor="memoryname"
                   className="block text-sm font-medium text-gray-700 sm:mt-px sm:pt-2"
                 >
-                  Event name
+                  Memory name
                 </label>
                 <div className="mt-1 sm:mt-0 sm:col-span-2">
                   <input
-                    id="event-name"
-                    name="event-name"
+                    id="memory-name"
+                    name="memory-name"
                     type="text"
                     className="block max-w-lg w-full shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm border border-gray-300 rounded-md"
                     required
-                    value={eventName}
-                    onChange={(e) => setEventName(e.target.value)}
+                    value={memoryName}
+                    onChange={(e) => setMemoryName(e.target.value)}
                   />
                 </div>
+                
+              </div>
+              <div className="sm:grid sm:grid-cols-3 sm:gap-4 sm:items-start sm:pt-5">
+                <label
+                  htmlFor="memoryname"
+                  className="block text-sm font-medium text-gray-700 sm:mt-px sm:pt-2"
+                >
+                  Memory ID
+                </label>
+                <div className="mt-1 sm:mt-0 sm:col-span-2">
+                  <input
+                    id="memory-id"
+                    name="memory-id"
+                    type="number"
+                    className="block max-w-lg w-full shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm border border-gray-300 rounded-md"
+                    required
+                    value={Id}
+                    onChange={(e) => setId(e.target.value)}
+                  />
+                </div>
+                
               </div>
 
               <div className="sm:grid sm:grid-cols-3 sm:gap-4 sm:items-start sm:pt-5">
@@ -110,48 +194,20 @@ export default function CreateEvent() {
                   htmlFor="max-capacity"
                   className="block text-sm font-medium text-gray-700 sm:mt-px sm:pt-2"
                 >
-                  Max capacity
+                  Friends
                   <p className="mt-1 max-w-2xl text-sm text-gray-400">
-                    Limit the number of spots available for your event.
+                    Add the wallet address of friends who were present.
                   </p>
                 </label>
                 <div className="mt-1 sm:mt-0 sm:col-span-2">
                   <input
                     type="number"
-                    name="max-capacity"
-                    id="max-capacity"
-                    min="1"
-                    placeholder="100"
+                    name="friends-address"
+                    id="friends-address"
+                    placeholder="0x"
                     className="max-w-lg block w-full shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:max-w-xs sm:text-sm border border-gray-300 rounded-md"
                     value={maxCapacity}
-                    onChange={(e) => setMaxCapacity(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div className="sm:grid sm:grid-cols-3 sm:gap-4 sm:items-start sm:pt-5">
-                <label
-                  htmlFor="refundable-deposit"
-                  className="block text-sm font-medium text-gray-700 sm:mt-px sm:pt-2"
-                >
-                  Refundable deposit
-                  <p className="mt-1 max-w-2xl text-sm text-gray-400">
-                    Require a refundable deposit (in MATIC) to reserve one spot
-                    at your event
-                  </p>
-                </label>
-                <div className="mt-1 sm:mt-0 sm:col-span-2">
-                  <input
-                    type="number"
-                    name="refundable-deposit"
-                    id="refundable-deposit"
-                    min="0"
-                    step="any"
-                    inputMode="decimal"
-                    placeholder="0.00"
-                    className="max-w-lg block w-full shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:max-w-xs sm:text-sm border border-gray-300 rounded-md"
-                    value={refund}
-                    onChange={(e) => setRefund(e.target.value)}
+                    onChange={(e) => addToFriendsArray(e.target.value)}
                   />
                 </div>
               </div>
@@ -161,9 +217,9 @@ export default function CreateEvent() {
                   htmlFor="event-link"
                   className="block text-sm font-medium text-gray-700 sm:mt-px sm:pt-2"
                 >
-                  Event link
+                  Associated Links
                   <p className="mt-1 max-w-2xl text-sm text-gray-400">
-                    The link for your virtual event
+                    Add tweets, websites, etc. related to this memory
                   </p>
                 </label>
                 <div className="mt-1 sm:mt-0 sm:col-span-2">
@@ -183,9 +239,9 @@ export default function CreateEvent() {
                   htmlFor="about"
                   className="block text-sm font-medium text-gray-700 sm:mt-px sm:pt-2"
                 >
-                  Event description
+                  Memory description
                   <p className="mt-2 text-sm text-gray-400">
-                    Let people know what your event is about!
+                    All the deets you want to treasure forever
                   </p>
                 </label>
                 <div className="mt-1 sm:mt-0 sm:col-span-2">
@@ -199,6 +255,27 @@ export default function CreateEvent() {
                   />
                 </div>
               </div>
+              <div className="sm:grid sm:grid-cols-3 sm:gap-4 sm:items-start sm:pt-5">
+                <label
+                  htmlFor="about"
+                  className="block text-sm font-medium text-gray-700 sm:mt-px sm:pt-2"
+                >
+                  Make memory public?
+                  <p className="mt-2 text-sm text-gray-400">
+                    Your memory will be viewable by anyone
+                  </p>
+                </label>
+                <input
+                    id="public"
+                    name="public"
+                    type="checkbox"
+                    className="block shadow-sm sm:text-sm border border-gray-300 rounded-md"
+                    required
+                    value={sPublic}
+                    onChange={(e) => setPublic(!sPublic)}
+                  />
+              </div>
+
             </div>
             <div className="pt-5">
               <div className="flex justify-end">
