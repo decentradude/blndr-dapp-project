@@ -32,6 +32,9 @@ export default function CreateEvent() {
   async function handleSubmit(e) {
     console.log("handle submit function called");
     e.preventDefault();
+    // const formData = new FormData();
+
+		// formData.append('File', photo);
 
     const body = {
       //the stuff that we're sending to web3storage - aka everything off-chain
@@ -49,7 +52,7 @@ export default function CreateEvent() {
 
     try {
       console.log("are you even getting inside the try?");
-      const response = await fetch("/api/store-memory-data", {
+      const response = await fetch("/api/storemem", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
