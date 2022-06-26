@@ -7,17 +7,16 @@ export default function Landing({ children }) {
         <title>BLNDR</title>
         <meta
           name="description"
-          content="Find, join, and create virtual events with your web3 frens"
+          content="Decentralized dating that safeguards your data."
         />
       </Head>
       <section className="py-12">
         <div className="w-full md:w-8/12 text-left">
           <h1 className="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
-            <span>Decentralized <span className="text-indigo-600">dating</span> without sacrificing </span>
-            <span className="text-indigo-600">your data</span>
+            <span> Welcome to <span className="text-indigo-600">BLNDR</span></span>
           </h1>
           <p className="mt-3 text-base text-gray-500 sm:mt-5 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-5 md:text-xl lg:mx-0">
-          Discover new interests while connecting with interesting individuals. 
+          Decentralized dating that safeguards your data.
           </p>
         </div>
       </section>
