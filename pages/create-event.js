@@ -110,7 +110,7 @@ export default function CreateEvent() {
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
       <Head>
-        <title>Create your memories | web3rsvp</title>
+        <title>Create your memories | blndr </title>
         <meta
           name="description"
           content="Create your virtual event on the blockchain"
